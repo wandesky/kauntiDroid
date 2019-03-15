@@ -4,4 +4,5 @@
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
     <string name="title_description">Scan QR Code in box below</string>
+    <string name="findings">Findings</string>
 </resources>

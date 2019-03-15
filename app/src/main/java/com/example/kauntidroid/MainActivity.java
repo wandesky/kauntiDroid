@@ -1,5 +1,6 @@
 package com.example.kauntidroid;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -29,6 +30,7 @@ import org.json.JSONObject;
 public class MainActivity extends AppCompatActivity {
 
     private TextView mTextMessage;
+    private TextView reportData;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -38,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
             switch (item.getItemId()) {
                 case R.id.navigation_home:
                     mTextMessage.setText(R.string.title_home);
+                    reportData.setText(resultReport);
                     return true;
 //                case R.id.navigation_dashboard:
 //                    mTextMessage.setText(R.string.title_dashboard);
@@ -57,9 +60,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+//        reportData = (TextView)findViewById(R.id.permitsTextView);
+//        reportData.setText(resultReport);
+
         mTextMessage = (TextView) findViewById(R.id.message);
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+
+
     }
 
     public void scanCode(View view){
@@ -78,27 +86,49 @@ public class MainActivity extends AppCompatActivity {
     String resultCode;
     String resultReport = "NO RESULT RECEIVED";
 
+    public class Connection extends AsyncTask<Void, Void, String>{
+        @Override
+        protected String doInBackground(Void... args){
+            //Start of http request process
+            try {
+                sendRequest();
+//                reportData.setText(resultReport);
+            } catch (IOException e) {
+//                Toast.makeText(MainActivity.this, e.toString(), Toast.LENGTH_SHORT).show();
+                e.printStackTrace();
+            } catch (JSONException e) {
+//                Toast.makeText(MainActivity.this, e.toString(), Toast.LENGTH_SHORT).show();
+                e.printStackTrace();
+            }
+//            reportData.setText(resultReport);
+            return "OK";
+        }
+
+        @Override
+        protected void onPostExecute(String result){
+            super.onPostExecute(result);
+//            reportData.setText(resultReport);
+
+            reportData = (TextView)findViewById(R.id.permitsTextView);
+            reportData.setText(resultReport);
+        }
+    }
+
     class ZXingScannerResultHandler implements ZXingScannerView.ResultHandler{
         @Override
         public void handleResult(Result result){
             resultCode = result.getText();
             Toast.makeText(MainActivity.this, resultCode, Toast.LENGTH_SHORT).show();
 
-            //Start of http request process
-            try {
-                sendRequest();
-            } catch (IOException e) {
-                Toast.makeText(MainActivity.this, e.toString(), Toast.LENGTH_SHORT).show();
-                e.printStackTrace();
-            } catch (JSONException e) {
-                Toast.makeText(MainActivity.this, e.toString(), Toast.LENGTH_SHORT).show();
-                e.printStackTrace();
-            }
-
-            Toast.makeText(MainActivity.this, resultReport, Toast.LENGTH_SHORT).show();
-
             setContentView(R.layout.activity_main);
             scannerView.stopCamera();
+
+            new Connection().execute();
+
+//            Toast.makeText(MainActivity.this, resultReport, Toast.LENGTH_SHORT).show();
+
+//            setContentView(R.layout.activity_main);
+//            scannerView.stopCamera();
 
         }
     }
@@ -127,14 +157,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void sendRequest() throws IOException, JSONException {
+    public String sendRequest() throws IOException, JSONException {
+        reportData.setText("SEND REQUEST METHOD CALLED");
         JSONObject json = readJsonFromUrl("https://kaunti.herokuapp.com/api/v1/permits/TCG-SBP-2018-2019-1276");
-        resultReport = json.toString();
+        resultReport = "RESULTS \n";
+        resultReport = json.get("permitID").toString();
+        System.out.println("*****RESULT REPORT ****** " + resultReport);
+        return "OK";
+//        reportData.setText(resultReport);
+
+
 //        System.out.println(json.toString());
 //        System.out.println(json.get("permitID"));
 
 //        Toast.makeText(MainActivity.this, json.toString(), Toast.LENGTH_LONG).show();
     }
-
-
 }
